@@ -2029,7 +2029,13 @@ if (marsLanded && marsExitTimer <= 0) {
                 )
         );
 
-       
+       // Display the current mission message
+g.setColor(Color.WHITE);
+g.drawString(
+        message,
+        42,
+        75
+);
 
         drawBar(
                 g,
