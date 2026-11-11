@@ -1,6 +1,9 @@
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Random;
+import java.util.function.DoubleSupplier;
+import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
 import javax.swing.*;
 
 public class SpaceMissionGame extends JPanel
@@ -9,6 +12,10 @@ public class SpaceMissionGame extends JPanel
     private final Timer timer = new Timer(16, this);
     private final Random random = new Random();
 
+    // ================================================================
+    //WEEK 8: STATE-BASED MISSION FLOW
+    // The current stage determines which mission behaviour is active.
+    // ================================================================
     private static final int READY = 0;
     private static final int BOARDING = 1;
     private static final int COUNTDOWN = 2;
@@ -207,8 +214,11 @@ private double marsAstronautX = 750;
     }
 }
     private void updateSpaceMission() {
-        double speed =
-                equipmentBroken ? 1.8 : 4.0;
+        // WEEK 9: BEHAVIOUR PARAMETERISATION
+        // This lambda supplies speed according to equipment condition.
+        DoubleSupplier speedSupplier =
+                () -> equipmentBroken ? 1.8 : 4.0;
+        double speed = speedSupplier.getAsDouble();
                 // Trigger the emergency once when the rocket reaches this position.
 if (!emergencyCompleted
         && rocketX >= EMERGENCY_TRIGGER_X) {
@@ -257,35 +267,38 @@ if (emergencyActive) {
                     "Equipment failure! Press R to repair";
         }
 
-        for (int i = 0;
-             i < asteroidX.length;
-             i++) {
+        // ============================================================
+        //  WEEK 12: RACE-SAFE PARALLEL ASTEROID PROCESSING
+        // ============================================================
+        final double currentRocketX = rocketX;
+        final double currentRocketY = rocketY;
+        final boolean[] collisions = new boolean[asteroidX.length];
 
-           asteroidX[i] -= 5 + i % 4;
+        IntStream.range(0, asteroidX.length)
+                .parallel()
+                .forEach(i -> {
+                    asteroidX[i] -= 5 + i % 4;
 
-            if (asteroidX[i] < -60) {
-               asteroidX[i] = 1100 + random.nextInt(180);
-
-                asteroidY[i] =
-                        110 + random.nextInt(500);
-            }
-
-            double distance =
-                    Math.hypot(
-                            rocketX - asteroidX[i],
-                            rocketY - asteroidY[i]
+                    double distance = Math.hypot(
+                            currentRocketX - asteroidX[i],
+                            currentRocketY - asteroidY[i]
                     );
 
-            if (distance
-                    < asteroidSize[i] / 2.0 + 25) {
+                    collisions[i] =
+                            distance < asteroidSize[i] / 2.0 + 25;
+                });
 
-                equipment -= 0.8;
-                energy -= 0.4;
+        // Shared resources, messages and Random remain sequential.
+        for (int i = 0; i < asteroidX.length; i++) {
+            if (asteroidX[i] < -60 || collisions[i]) {
+                if (collisions[i]) {
+                    equipment -= 0.8;
+                    energy -= 0.4;
+                    message = "Asteroid collision! Equipment damaged";
+                }
 
-               asteroidX[i] = 1100 + random.nextInt(180);
-
-                message =
-                        "Asteroid collision! Equipment damaged";
+                asteroidX[i] = 1100 + random.nextInt(180);
+                asteroidY[i] = 110 + random.nextInt(500);
             }
         }
 
@@ -306,12 +319,10 @@ message = "Approaching the Mars landing site";
             left = false;
             right = false;
 
-            score = (int) (
-                    fuel
-                            + oxygen
-                            + energy
-                            + equipment
-            );
+            // WEEK 10: primitive stream mission score.
+            score = (int) DoubleStream.of(
+                    fuel, oxygen, energy, equipment
+            ).sum();
 
             message =
                     "MARS REACHED! The rocket landed safely";
@@ -319,18 +330,13 @@ message = "Approaching the Mars landing site";
     }
 
     private void resetAsteroids() {
-        for (int i = 0;
-             i < asteroidX.length;
-             i++) {
-
-            asteroidX[i] = 330 + i * 100 + random.nextInt(80);
-
-            asteroidY[i] =
-                    120 + random.nextInt(500);
-
-            asteroidSize[i] =
-                    30 + random.nextInt(35);
-        }
+        // WEEK 10: IntStream supplies every asteroid index.
+        IntStream.range(0, asteroidX.length)
+                .forEach(i -> {
+                    asteroidX[i] = 330 + i * 100 + random.nextInt(80);
+                    asteroidY[i] = 120 + random.nextInt(500);
+                    asteroidSize[i] = 30 + random.nextInt(35);
+                });
     }
 
     @Override
