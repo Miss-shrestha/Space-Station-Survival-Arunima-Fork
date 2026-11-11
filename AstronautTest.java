@@ -4,29 +4,29 @@ public class AstronautTest {
 
     public static void main(String[] args) {
 
-        // Create an Engineer
-        Engineer alex = createEngineer("Alex");
+        // Create Sky, the Engineer
+        Engineer sky = createEngineer("Sky");
 
-        showAstronautInfo(alex);
-        moveTowardsRocket(alex);
-        boardRocket(alex);
-        engineerRepairsEquipment(alex);
+        showAstronautInfo(sky);
+        moveTowardsRocket(sky);
+        boardRocket(sky);
+        engineerRepairsEquipment(sky);
 
-        // Create a Photographer
-        Photographer sam = createPhotographer("Sam");
+        // Create Rain, the Photographer
+        Photographer rain = createPhotographer("Rain");
 
-        boardRocket(sam);
-        photographerPreparesCamera(sam);
+        boardRocket(rain);
+        photographerPreparesCamera(rain);
 
-        // Generic ArrayList that stores different types of Astronauts
+        // Generic ArrayList storing different Astronaut subclasses
         ArrayList<Astronaut> crew = new ArrayList<>();
 
-        crew.add(alex);
-        crew.add(sam);
+        crew.add(sky);
+        crew.add(rain);
 
         System.out.println("\n=== Crew tasks ===");
 
-        // Polymorphism - each astronaut performs their own task
+        // Polymorphism: each astronaut performs their own task
         for (Astronaut astronaut : crew) {
             astronaut.performTask();
         }
@@ -45,30 +45,53 @@ public class AstronautTest {
     }
 
     // Shows an astronaut's information
-    public static void showAstronautInfo(Astronaut astronaut) {
+    public static void showAstronautInfo(
+            Astronaut astronaut) {
+
         System.out.println("\n=== Astronaut details ===");
-        System.out.println("Name: " + astronaut.getName());
-        System.out.println("Health: " + astronaut.getHealth());
-        System.out.println("Oxygen: " + astronaut.getOxygen());
+        System.out.println(
+                "Name: " + astronaut.getName()
+        );
+        System.out.println(
+                "Health: " + astronaut.getHealth()
+        );
+        System.out.println(
+                "Oxygen: " + astronaut.getOxygen()
+        );
     }
 
     // Moves an astronaut towards the rocket
-    public static void moveTowardsRocket(Astronaut astronaut) {
-        System.out.println("\n=== Moving towards the rocket ===");
+    public static void moveTowardsRocket(
+            Astronaut astronaut) {
+
         System.out.println(
-            astronaut.getName() + " is walking towards the rocket."
+                "\n=== Moving towards the rocket ==="
+        );
+
+        System.out.println(
+                astronaut.getName()
+                + " is walking towards the rocket."
         );
     }
 
     // Astronaut boards the rocket
-    public static void boardRocket(Astronaut astronaut) {
-        System.out.println("\n=== Boarding the rocket ===");
+    public static void boardRocket(
+            Astronaut astronaut) {
+
+        System.out.println(
+                "\n=== Boarding the rocket ==="
+        );
+
         astronaut.board();
     }
 
     // Engineer repairs equipment
-    public static void engineerRepairsEquipment(Engineer engineer) {
-        System.out.println("\n=== Engineer repairing equipment ===");
+    public static void engineerRepairsEquipment(
+            Engineer engineer) {
+
+        System.out.println(
+                "\n=== Engineer repairing equipment ==="
+        );
 
         SolarPanel panel = new SolarPanel();
 
@@ -80,7 +103,7 @@ public class AstronautTest {
             Photographer photographer) {
 
         System.out.println(
-            "\n=== Photographer preparing the camera ==="
+                "\n=== Photographer preparing the camera ==="
         );
 
         photographer.performTask();
