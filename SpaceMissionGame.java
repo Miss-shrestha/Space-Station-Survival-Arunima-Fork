@@ -38,6 +38,11 @@ public class SpaceMissionGame extends JPanel
     private boolean right;
     private boolean equipmentBroken = false;
 
+    //  Mission Control Emergency System
+private boolean emergencyActive = false;
+private boolean emergencyCompleted = false;
+private static final double EMERGENCY_TRIGGER_X = 450;
+
     private String message =
             "Press ENTER to begin the Mars mission";
 
@@ -204,6 +209,20 @@ private double marsAstronautX = 750;
     private void updateSpaceMission() {
         double speed =
                 equipmentBroken ? 1.8 : 4.0;
+                // Trigger the emergency once when the rocket reaches this position.
+if (!emergencyCompleted
+        && rocketX >= EMERGENCY_TRIGGER_X) {
+
+    emergencyActive = true;
+
+    message =
+            "MISSION EMERGENCY! Press S for Safe Route or D for Dangerous Route";
+}
+
+// Pause space travel until the player selects a route.
+if (emergencyActive) {
+    return;
+}
 
         if (up && rocketY > 95) {
             rocketY -= speed;
@@ -2071,9 +2090,10 @@ if (marsLanded && marsExitTimer <= 0) {
             controls =
                     "ENTER: Start     N: Restart";
 
-        } else if (stage == SPACE) {
-            controls =
-                    "ARROW KEYS: Fly     R: Repair     N: Restart";
+       } else if (stage == SPACE) {
+    controls = emergencyActive
+            ? "EMERGENCY: S Safe     D Dangerous"
+            : "ARROW KEYS: Fly     R: Repair     N: Restart";
 
         } else if (stage == MARS) {
             controls =
@@ -2089,6 +2109,77 @@ if (marsLanded && marsExitTimer <= 0) {
                 58,
                 690
         );
+        // Mission Control Emergency decision box
+if (emergencyActive) {
+
+    g.setColor(new Color(5, 15, 28, 235));
+    g.fillRoundRect(
+            245,
+            235,
+            610,
+            190,
+            22,
+            22
+    );
+
+    g.setColor(new Color(255, 185, 45));
+    g.setStroke(new BasicStroke(4));
+
+    g.drawRoundRect(
+            245,
+            235,
+            610,
+            190,
+            22,
+            22
+    );
+
+    g.setColor(Color.WHITE);
+
+    g.setFont(
+            new Font(
+                    "SansSerif",
+                    Font.BOLD,
+                    28
+            )
+    );
+
+    g.drawString(
+            "MISSION CONTROL EMERGENCY",
+            320,
+            285
+    );
+
+    g.setFont(
+            new Font(
+                    "SansSerif",
+                    Font.PLAIN,
+                    17
+            )
+    );
+
+    g.drawString(
+            "S - Safe Route: uses 20% extra fuel",
+            330,
+            330
+    );
+
+    g.drawString(
+            "D - Dangerous Route: may damage equipment",
+            330,
+            365
+    );
+
+    g.setColor(new Color(255, 210, 75));
+
+    g.drawString(
+            "Choose a route to continue the mission",
+            365,
+            402
+    );
+
+    g.setStroke(new BasicStroke(1));
+}
         g.translate(0, 14);
     }
 
@@ -2213,8 +2304,8 @@ if (marsLanded && marsExitTimer <= 0) {
         stageTimer = 0;
         score = 0;
 
-        rocketX = 770;
-        rocketY = 545;
+        rocketX = 775;
+        rocketY = 525;
 
         astronautX = 400;
         astronautY = 610;
@@ -2225,6 +2316,10 @@ if (marsLanded && marsExitTimer <= 0) {
         equipment = 100;
 
         equipmentBroken = false;
+
+// Reset the Mission Control Emergency System
+emergencyActive = false;
+emergencyCompleted = false;
 
         up = false;
         down = false;
@@ -2239,87 +2334,127 @@ if (marsLanded && marsExitTimer <= 0) {
     }
 
     @Override
-    public void keyPressed(KeyEvent event) {
-        int pressedKey =
-                event.getKeyCode();
+public void keyPressed(KeyEvent event) {
 
-       if (pressedKey == KeyEvent.VK_ENTER
-        && stage == READY) {
+    int pressedKey = event.getKeyCode();
 
-    stage = BOARDING;
-    stageTimer = 100;
-    message = "Sky and Rain are waving before boarding";
+    if (pressedKey == KeyEvent.VK_ENTER
+            && stage == READY) {
+
+        stage = BOARDING;
+        stageTimer = 100;
+        message =
+                "Sky and Rain are waving before boarding";
+    }
+
+    // S: Safe route
+    if (stage == SPACE
+            && emergencyActive
+            && pressedKey == KeyEvent.VK_S) {
+
+        if (fuel >= 20) {
+            fuel -= 20;
+            emergencyActive = false;
+            emergencyCompleted = true;
+
+            message =
+                    "SAFE ROUTE selected - 20% extra fuel used";
+
+        } else {
+            message =
+                    "Not enough fuel - press D";
+        }
+    }
+
+    // D: Dangerous route
+    if (stage == SPACE
+            && emergencyActive
+            && pressedKey == KeyEvent.VK_D) {
+
+        emergencyActive = false;
+        emergencyCompleted = true;
+
+        if (random.nextBoolean()) {
+            equipment =
+                    Math.max(0, equipment - 30);
+
+            equipmentBroken = true;
+
+            message =
+                    "DANGEROUS ROUTE damaged equipment!";
+
+        } else {
+            message =
+                    "DANGEROUS ROUTE successful";
+        }
+    }
+
+    if (pressedKey == KeyEvent.VK_UP) {
+        up = true;
+    }
+
+    if (pressedKey == KeyEvent.VK_DOWN) {
+        down = true;
+    }
+
+    if (pressedKey == KeyEvent.VK_LEFT) {
+        left = true;
+    }
+
+    if (pressedKey == KeyEvent.VK_RIGHT) {
+        right = true;
+    }
+
+    if (pressedKey == KeyEvent.VK_R
+            && stage == SPACE
+            && equipmentBroken) {
+
+        if (energy >= 15) {
+            energy -= 15;
+
+            equipment =
+                    Math.min(100, equipment + 35);
+
+            equipmentBroken = false;
+
+            message =
+                    "Engineer repaired the equipment";
+
+        } else {
+            message =
+                    "Not enough energy to repair equipment";
+        }
+    }
+
+    if (pressedKey == KeyEvent.VK_N) {
+        restartGame();
+    }
 }
 
-        if (pressedKey == KeyEvent.VK_UP) {
-            up = true;
-        }
+@Override
+public void keyReleased(KeyEvent event) {
 
-        if (pressedKey == KeyEvent.VK_DOWN) {
-            down = true;
-        }
+    int releasedKey = event.getKeyCode();
 
-        if (pressedKey == KeyEvent.VK_LEFT) {
-            left = true;
-        }
-
-        if (pressedKey == KeyEvent.VK_RIGHT) {
-            right = true;
-        }
-
-        if (pressedKey == KeyEvent.VK_R
-                && stage == SPACE
-                && equipmentBroken) {
-
-            if (energy >= 15) {
-                energy -= 15;
-
-                equipment =
-                        Math.min(
-                                100,
-                                equipment + 35
-                        );
-
-                equipmentBroken = false;
-
-                message =
-                        "Engineer repaired the equipment";
-
-            } else {
-                message =
-                        "Not enough energy to repair equipment";
-            }
-        }
-
-        if (pressedKey == KeyEvent.VK_N) {
-            restartGame();
-        }
+    if (releasedKey == KeyEvent.VK_UP) {
+        up = false;
     }
 
-    @Override
-    public void keyReleased(KeyEvent event) {
-        int releasedKey =
-                event.getKeyCode();
-
-        if (releasedKey == KeyEvent.VK_UP) {
-            up = false;
-        }
-
-        if (releasedKey == KeyEvent.VK_DOWN) {
-            down = false;
-        }
-
-        if (releasedKey == KeyEvent.VK_LEFT) {
-            left = false;
-        }
-
-        if (releasedKey == KeyEvent.VK_RIGHT) {
-            right = false;
-        }
+    if (releasedKey == KeyEvent.VK_DOWN) {
+        down = false;
     }
 
-    @Override
-    public void keyTyped(KeyEvent event) {
+    if (releasedKey == KeyEvent.VK_LEFT) {
+        left = false;
     }
+
+    if (releasedKey == KeyEvent.VK_RIGHT) {
+        right = false;
+    }
+}
+
+@Override
+public void keyTyped(KeyEvent event) {
+}
 
 }
